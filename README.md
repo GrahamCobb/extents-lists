@@ -1,4 +1,4 @@
-#extent-lists
+#extents-lists
 
 Programs to manipulate lists of file extents.
 
@@ -50,8 +50,8 @@ do not follow those rules.
 extents-list <find-options>...
 ```
 
-Where <find-options> are options which will be passed to the find
-command to result in a list of files to be considered.
+*find-options* are options which will be passed to the `find`
+command to generate a list of files.
 
 Examples:
 
@@ -62,7 +62,7 @@ Examples:
 ##extents-merge
 
 List of extent start and finish pairs on stdin.
-Output list with overlapping and adjacent extents merged
+Output list with overlapping and adjacent extents merged.
 
 ##extents-size
 
@@ -79,7 +79,7 @@ Blocksize defaults to 4096.
 extents-union <filename>...
 ```
 
-Output the extents contained in any of the named extents lists.
+Output the extents contained in **any** of the named extents lists.
 
 ##extents-intersection
 
@@ -87,7 +87,7 @@ Output the extents contained in any of the named extents lists.
 extents-intersection <filename>...
 ```
 
-Output the extents contained in all of the named extents lists.
+Output the extents contained in **all** of the named extents lists.
 
 ##extents-difference
 
@@ -95,7 +95,7 @@ Output the extents contained in all of the named extents lists.
 extents-difference <filename>...
 ```
 
-Output the extents contained in the first named file which are not present in any of the other files.
+Output the extents contained in the first named file which are **not** present in any of the other files.
 
 ##extents-expr
 ```
@@ -103,7 +103,7 @@ extents-expr [-s] <directory>... [<operator> <directory>...]...
 ```
 
 Very simple expression evaluator for extents.
-Extents lists are generated from each <directory> and the operators are applied.
+Extents lists are generated from each *directory* and the operators are applied.
 The default operator used between adjacent directories is "union".
 
 Operators are:
@@ -112,26 +112,26 @@ Operators are:
 *   - difference
 
 There is no operator precedence, no parentheses and all evaluation is strictly left-to-right.
+Note: **THIS MIGHT CHANGE** at some time in the future.
 This means that using wildcards or concatenation between directories in the righthand-side
 of an operator will almost certainly not achieve the desired effect (see example below).
 
-Note: *THIS MIGHT CHANGE* at some time in the future.
-
-If the -s option is specified then the resulting list is automatically sent to extents-size.
+If the -s option is specified then the resulting list is automatically sent to `extents-size`
+instead of being sent to *stdout*.
 
 ## Examples
 
-1. To find out how much space is being wasted by keeping historical btrbk snapshots
+* To find out how much space is being wasted by keeping historical btrbk snapshots
 of a subvolume called 'cobb' you could use:
 ```
  	extents-expr -s cobb.* - cobb.20160815T000602+0100
 ```
-2. To find out how much data is shared between two specific snapshots use:
+* To find out how much data is shared between two specific snapshots use:
 ```
 	extents-expr -s Media.20160801T030601+0100 ^ Media.20160815T000602+0100
 ```
-3. To determine how much of the data in the latest snapshot is
-unique to that snapshot is harder and and cannot be done in extents-expr.
+* To determine how much of the data in the latest snapshot is
+unique to that snapshot is harder and and cannot be done using `extents-expr`.
 ```
 	extents-expr -s latest-snapshot - cobb.*
 ```
@@ -144,7 +144,7 @@ For example:
 	extents-list latest-snapshot >/tmp/latest-snapshot.extents
 	extents-list cobb.* >/tmp/cobb.extents
 	extents-difference /tmp/latest-snapshot.extents /tmp/cobb.extents | extents-size
-
+```
 
 
 ## Notices
