@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Copyright (C) 2016 Graham R. Cobb
+# Released under GPL V2 -- see LICENSE
+#
+# extents-size [<blocksize>]
+#
+# Blocksize defaults to 4096
+#
+
+blocksize=4096
+[ -n "$1" ] && blocksize=$1
+
+blocks=0
+
+while read start end restofline && [ -n "$start" ] ; do let blocks+=(end-start+1) ; done
+
+let size=blocks*blocksize
+let gb=size/1024/1024/1024
+
+echo "$blocks blocks = $size bytes (${gb}GB)"
+

@@ -1,0 +1,78 @@
+#!/bin/bash
+
+# Copyright (C) 2016 Graham R. Cobb
+# Released under GPL V2 -- see LICENSE
+#
+# extents-difference <filename>...
+#
+#
+# Output the extents contained in the first named file, with the extents from the other files removed
+# I.e. <file1> - ( Union of file2..fileN )
+#
+# Note: uses file descriptors 7 and 8
+#
+
+if [ $# -lt 2 ]
+then
+    echo "Usage: $0 <filename> <filename>..."
+    exit 1
+fi
+
+function copy_remainder {
+    cat <&${IN1}-
+}
+
+function diff2 {
+    # File descriptors
+    IN1=7
+    IN2=8
+    exec 7<$1 8<$2
+
+    read -u $IN1 start1 end1 restofline || return
+    if [ -z "$start1" -o -z "$end1" ] ; then return ; fi
+    
+    if ! read -u $IN2 start2 end2 restofline ; then copy_remainder ; return ; fi
+    if [ -z "$start2" -o -z "$end2" ] ; then copy_remainder ; return ; fi
+
+    while true
+    do
+#	echo "Outer loop: S1=$start1 E1=$end1 S2=$start2 E2=$end2"
+	
+	while [ $start1 -gt $end2 ]
+	do
+	    if ! read -u $IN2 start2 end2 restofline ; then copy_remainder ; return ; fi
+	    if [ -z "$start2" -o -z "$end2" ] ; then copy_remainder ; return ; fi
+	done
+
+	# Output any extents before extent2
+#	echo "Overlap?: S1=$start1 E1=$end1 S2=$start2 E2=$end2"
+	if [ $start1 -lt $start2 ]
+	then
+	    if [ $end1 -lt $start2 ] ; then let end=end1 ; else let end=start2-1 ; fi
+	    let length=end-start1+1
+	    echo $start1 $end $length
+	fi
+
+	# Skip extents contained in extent2
+	let start1=end2+1
+
+	if [ $start1 -gt $end1 ]
+	then
+#	    echo "Before read1: S1=$start1 E1=$end1 S2=$start2 E2=$end2"
+	    read -u $IN1 start1 end1 restofline || return
+	    if [ -z "$start1" -o -z "$end1" ] ; then return ; fi
+	fi
+    done
+}
+
+if [ $# -eq 2 ]
+then diff2 "$@"
+else
+    file1=$1
+    file2=$2
+    shift 2
+    outfile=`mktemp`
+    diff2 $file1 $file2 >$outfile
+    $0 $outfile "$@"
+    rm $outfile
+fi

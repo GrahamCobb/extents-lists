@@ -1,0 +1,113 @@
+#!/bin/bash
+
+# Copyright (C) 2016 Graham R. Cobb
+# Released under GPL V2 -- see LICENSE
+#
+# extents-expr [-s] <directory>... [<operator> <directory>...]... 
+#
+# Extents lists are generated from each <directory> and the operators are applied.  The default
+# operator used between adjacent directories is "union".
+#
+# Operators are:
+#   + union
+#   ^ intersection
+#   - difference
+#
+# There is no operator precedence, no parentheses and all evaluation is strictly left-to-right.
+# This means that using wildcards or concatenation between directories in the righthand-side
+# of an operator will almost certainly not achieve the desired effect (see example below).
+#
+# If the -s option is specified then the resulting list is automatically sent to extents-size.
+#
+# Example: to find out how much space is being wasted by keeping historical btrbk snapshots
+# of a subvolume called 'cobb' you could use:
+#
+# 	extents-expr -s cobb.* - cobb.20160815T000602+0100
+#
+# Or, to find out how much data is shared between two specific snapshots use:
+#
+#	extents-expr -s Media.20160801T030601+0100 ^ Media.20160815T000602+0100
+#
+# However, the following expression DOES NOT give the result that is probably intended:
+#
+#	extents-expr -s cobb.20160815T000602+0100 - cobb.*
+#
+# The desired calculation was probably to determine how much of the data in the latest snapshot is
+# unique to that snapshot (i.e. new).  However the effect is to subtract the first of the cobb.*
+# directories and then add in all the rest.  The desired effect would be something like:
+#
+# 	extents-expr -s cobb.20160815T000602+0100 - ( cobb.* )
+#
+# but parentheses (and precedence) are not available.
+#
+# THIS MIGHT CHANGE at some time in the future.
+#
+
+if [ "$1" = "-s" ]
+then
+    shift
+    $0 "$@" | extents-size
+    exit
+fi
+
+outfile=""
+while [ $# -gt 0 ]
+do
+    if [ "$1" = "+" ]
+    then
+	: Skip, as + is the default operator
+    elif [ "$1" = "^" ]
+    then
+	# Intersection
+	shift
+	
+	# If existing outfile is null then we do nothing as intersection with null is still null
+	if [ -n "$outfile" ]
+	then
+	    tmpfile=`mktemp`
+	    extents-list "$1" >$tmpfile
+
+	    newoutfile=`mktemp`
+	    extents-intersection $outfile $tmpfile >$newoutfile
+	    rm $outfile
+	    rm $tmpfile
+	    outfile=$newoutfile
+	fi
+    elif [ "$1" = "-" ]
+    then
+	# Difference
+	shift
+	
+	# If existing outfile is null then we do nothing as difference from null is still null
+	if [ -n "$outfile" ]
+	then
+	    tmpfile=`mktemp`
+	    extents-list "$1" >$tmpfile
+
+	    newoutfile=`mktemp`
+	    extents-difference $outfile $tmpfile >$newoutfile
+	    rm $outfile
+	    rm $tmpfile
+	    outfile=$newoutfile
+	fi
+    else
+	# Default operation (union)
+	tmpfile=`mktemp`
+	extents-list "$1" >$tmpfile
+
+	if [ -n "$outfile" ]
+	then
+	    newoutfile=`mktemp`
+	    extents-union $outfile $tmpfile >$newoutfile
+	    rm $outfile
+	    rm $tmpfile
+	    outfile=$newoutfile
+	else
+	    outfile=$tmpfile
+	fi
+    fi
+    
+    shift
+done
+cat $outfile
+rm $outfile

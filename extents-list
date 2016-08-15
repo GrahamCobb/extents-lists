@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Copyright (C) 2016 Graham R. Cobb
+# Released under GPL V2 -- see LICENSE
+#
+# extents-list <find-options>...
+#
+# Where <find-options> are options which will be passed to the find
+# command to result in a list of files to be considered.
+#
+# Examples:
+#
+# extents-list some-directory/some-file
+# extents-list some-directory
+# extents-list subvolume-directory -mount
+#
+
+if [ $# -eq 0 ]
+then
+    echo "$0: No file specified"
+    echo "Usage: $0 <find-options>..."
+    exit 1
+fi
+
+# find all the files
+find "$@" -type f -print0 |
+    # list each file's extents
+    xargs -0 filefrag -vs |
+    # Get just the extent starts and ends
+    awk -e '
+	/^[[:space:]]*[[:digit:]]+:[[:space:]]*[[:digit:]]+..[[:space:]]*[[:digit:]]+:[[:space:]]*([[:digit:]]+)..[[:space:]]*([[:digit:]]+):/ {
+		if (match($0, /^[[:space:]]*[[:digit:]]+:[[:space:]]*[[:digit:]]+..[[:space:]]*[[:digit:]]+:[[:space:]]*([[:digit:]]+)..[[:space:]]*([[:digit:]]+):/, a) > 0)
+			print a[1], a[2]
+		}
+	' |
+    extents-merge

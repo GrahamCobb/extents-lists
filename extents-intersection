@@ -1,0 +1,78 @@
+#!/bin/bash
+
+# Copyright (C) 2016 Graham R. Cobb
+# Released under GPL V2 -- see LICENSE
+#
+# extents-intersection <filename>...
+#
+#
+# Output the extents contained in all of the named extents lists
+#
+# Note: uses file descriptors 7 and 8
+#
+
+if [ $# -lt 2 ]
+then
+    echo "Usage: $0 <filename> <filename>..."
+    exit 1
+fi
+
+function intersect2 {
+    # File descriptors
+    IN1=7
+    IN2=8
+    exec 7<$1 8<$2
+
+    read -u $IN1 start1 end1 restofline || return
+    read -u $IN2 start2 end2 restofline || return
+    if [ -z "$start1" -o -z "$start2" -o -z "$end1" -o -z "$end2" ] ; then return ; fi
+
+    while true
+    do
+	#    echo "Outer loop: S1=$start1 E1=$end1 S2=$start2 E2=$end2"
+	
+	while [ $start1 -gt $end2 -o $start2 -gt $end1 ]
+	do
+	    #	echo "Inner loop: S1=$start1 E1=$end1 S2=$start2 E2=$end2"
+	    # Skip forward file 2 until it overlaps with extent1
+	    while [ $start1 -gt $end2 ]
+	    do read -u $IN2 start2 end2 restofline && [ -n "$start2" ] && [ -n "$end2" ] || return
+	    done
+
+	    # Skip forward file 1 until it overlaps with extent2
+	    while [ $start2 -gt $end1 ]
+	    do read -u $IN1 start1 end1 restofline && [ -n "$start1" ] && [ -n "$end1" ] || return
+	    done
+	done
+
+	# We have an overlap
+	#    echo "Overlap: S1=$start1 E1=$end1 S2=$start2 E2=$end2"
+	
+	# Move to start of overlap
+	if [ $start1 -lt $start2 ] ; then start1=$start2 ; fi
+	if [ $start2 -lt $start1 ] ; then start2=$start1 ; fi
+
+	# Find end of overlap
+	if [ $end1 -lt $end2 ] ; then end=$end1 ; else end=$end2 ; fi
+
+	# Got overlap
+	let length=$end-$start1+1
+	echo $start1 $end $length
+
+	# Move on...
+	let start1=$end+1
+	let start2=$end+1
+    done
+}
+
+if [ $# -eq 2 ]
+then intersect2 "$@"
+else
+    file1=$1
+    file2=$2
+    shift 2
+    outfile=`mktemp`
+    intersect2 $file1 $file2 >$outfile
+    $0 $outfile "$@"
+    rm $outfile
+fi

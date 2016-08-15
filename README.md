@@ -1,2 +1,162 @@
-# extents-lists
-Manipulate file extent lists
+#extent-lists
+
+Programs to manipulate lists of file extents.
+
+The main motivation for these scripts is to understand more about the usage of shared extents
+on my btrfs systems.  However, they are technically valid on any filesystem which supports
+the FIEMAP ioctl.
+
+The scripts manipulate lists of occupied filesystem extents, treated as just sets of blocks.
+The scripts do not track which files the extents relate to, just which extents are in use.
+
+These scripts allow answering questions like "how much space am I wasting by keeping historical snapshots",
+"how much data is being shared between two subvolumes", "how much of the data in my latest snapshot is
+unique to that snapshot" and "how much data would I actually free up if I removed (just) these particular 
+snapshots".
+
+## Program summary
+
+The following commands are available:
+
+```
+extents-list <find-options> >output-list
+
+extents-merge <input-list >output-list
+
+extents-size [<blocksize>] <input-list
+
+extents-union <filename>... >output-list
+
+extents-intersection <filename>... >output-list
+
+extents-difference <filename>... >output-list
+
+extents-expr [-s] <directory>... [<operator> <directory>...]... >output-list
+```
+
+## Extent lists
+
+The basic datastructure is an extent list.  This is a text file with one line for each in-use
+range of blocks (identified by the *physical_offset* displayed using `filefrag -v`).
+The line has three fields (in decimal, space separated): starting offset, ending offset and length (in blocks).
+The scripts all write that format, but they ignore the length field and anything else on the line when
+reading the files. The file **MUST** be in numerical order by starting offset and the extents **MUST
+NOT** overlap.  Adjacent extents **SHOULD** be combined. Note that `extents-merge` will fix files that
+do not follow those rules.
+
+##extents-list
+
+```
+extents-list <find-options>...
+```
+
+Where <find-options> are options which will be passed to the find
+command to result in a list of files to be considered.
+
+Examples:
+
+* extents-list some-directory/some-file
+* extents-list some-directory
+* extents-list subvolume-directory -mount
+
+##extents-merge
+
+List of extent start and finish pairs on stdin.
+Output list with overlapping and adjacent extents merged
+
+##extents-size
+
+```
+extents-size [<blocksize>]
+```
+
+Calculate space occupied by the extent list provided on stdin.
+Blocksize defaults to 4096.
+
+##extents-union
+
+```
+extents-union <filename>...
+```
+
+Output the extents contained in any of the named extents lists.
+
+##extents-intersection
+
+```
+extents-intersection <filename>...
+```
+
+Output the extents contained in all of the named extents lists.
+
+##extents-difference
+
+```
+extents-difference <filename>...
+```
+
+Output the extents contained in the first named file which are not present in any of the other files.
+
+##extents-expr
+```
+extents-expr [-s] <directory>... [<operator> <directory>...]...
+```
+
+Very simple expression evaluator for extents.
+Extents lists are generated from each <directory> and the operators are applied.
+The default operator used between adjacent directories is "union".
+
+Operators are:
+*   + union
+*   ^ intersection
+*   - difference
+
+There is no operator precedence, no parentheses and all evaluation is strictly left-to-right.
+This means that using wildcards or concatenation between directories in the righthand-side
+of an operator will almost certainly not achieve the desired effect (see example below).
+
+Note: *THIS MIGHT CHANGE* at some time in the future.
+
+If the -s option is specified then the resulting list is automatically sent to extents-size.
+
+## Examples
+
+1. To find out how much space is being wasted by keeping historical btrbk snapshots
+of a subvolume called 'cobb' you could use:
+```
+ 	extents-expr -s cobb.* - cobb.20160815T000602+0100
+```
+2. To find out how much data is shared between two specific snapshots use:
+```
+	extents-expr -s Media.20160801T030601+0100 ^ Media.20160815T000602+0100
+```
+3. To determine how much of the data in the latest snapshot is
+unique to that snapshot is harder and and cannot be done in extents-expr.
+```
+	extents-expr -s latest-snapshot - cobb.*
+```
+does not give the desired result because of the strict left-to-right evaluation of the expression.
+The effect is to subtract the first of the cobb.* directories and then add in all the rest.
+
+The way to do this is to use the lower level commands and temporary files.
+For example:
+```
+	extents-list latest-snapshot >/tmp/latest-snapshot.extents
+	extents-list cobb.* >/tmp/cobb.extents
+	extents-difference /tmp/latest-snapshot.extents /tmp/cobb.extents | extents-size
+
+
+
+## Notices
+Copyright (c) 2016 Graham R. Cobb.
+This software is distributed under the GPL (see the copyright notices and the LICENSE file).
+
+`extents-lists` is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+`extents-list` is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.

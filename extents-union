@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Copyright (C) 2016 Graham R. Cobb
+# Released under GPL V2 -- see LICENSE
+#
+# extents-union <filename>...
+#
+#
+# Output the extents contained in any of the named extents lists
+#
+
+if [ $# -eq 0 ]
+then
+    echo "$0: No file specified"
+    echo "Usage: $0 <filename>..."
+    exit 1
+fi
+
+cat "$@" | extents-merge

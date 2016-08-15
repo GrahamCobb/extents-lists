@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Copyright (C) 2016 Graham R. Cobb
+# Released under GPL V2 -- see LICENSE
+# list of extent start and finish pairs on stdin
+# output list with overlapping and adjacent extents merged
+sort -n |
+# Merge adjacent or overlapping extents
+awk -e '
+        BEGIN	{
+        	start = -1;
+        	end = -1;
+	}
+
+                {
+                if ($1 <= end + 1) {
+			# This extent overlaps the preceeding one, or is adjacent to it
+			# so update the end if it is further than the preceding one
+			if ($2 > end) end = $2;
+                } else {
+			# New extent which does not need to be merged
+                        if (start >= 0) print start, end, end - start + 1;
+                        start = $1; end = $2;
+		}
+		}
+
+	END	{if (start >= 0) print start, end, end - start + 1}
+        '
+
