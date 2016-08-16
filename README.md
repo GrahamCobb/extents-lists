@@ -113,7 +113,7 @@ Operators are:
 
 There is no operator precedence, no parentheses and all evaluation is strictly left-to-right.
 Note: **THIS MIGHT CHANGE** at some time in the future.
-This means that using wildcards or concatenation between directories in the righthand-side
+This means that using wildcards in the righthand-side
 of an operator will almost certainly not achieve the desired effect (see example below).
 
 If the -s option is specified then the resulting list is automatically sent to `extents-size`
@@ -124,19 +124,21 @@ instead of being sent to *stdout*.
 * To find out how much space is being wasted by keeping historical btrbk snapshots
 of a subvolume called 'cobb' you could use:
 ```
- 	extents-expr -s cobb.* - cobb.20160815T000602+0100
+ 	extents-expr -s cobb.* - cobb
 ```
+
 * To find out how much data is shared between two specific snapshots use:
 ```
 	extents-expr -s Media.20160801T030601+0100 ^ Media.20160815T000602+0100
 ```
+
 * To determine how much of the data in the latest snapshot is
 unique to that snapshot is harder and and cannot be done using `extents-expr`.
 ```
 	extents-expr -s latest-snapshot - cobb.*
 ```
-does not give the desired result because of the strict left-to-right evaluation of the expression.
-The effect is to subtract the first of the cobb.* directories and then add in all the rest.
+does **not** give the desired result because of the strict left-to-right evaluation of the expression.
+The actual effect is to subtract the first of the cobb.* directories and then add in all the rest.
 
 The way to do this is to use the lower level commands and temporary files.
 For example:
@@ -146,6 +148,29 @@ For example:
 	extents-difference /tmp/latest-snapshot.extents /tmp/cobb.extents | extents-size
 ```
 
+* To find out how much space particular directories/subvolumes/snapshots are occupying you could use:
+```
+	extents-expr -s some/directory some/other/directory
+```
+But this counts space which might be shared with other directories/subvolumes/snapshots.
+
+* To actually find out how much space would be freed if particular directories/subvolumes/snapshots are removed
+requires measuring the space occupied by the files which would be **left**.
+The key is to work out the find options which return those files, remembering that extents-list always adds `-type f -print0`
+to the end (which means that a `-o` may be needed at the end of the options).
+In the example below, the disk is mounted as */mnt/data* and the two directories to be removed are
+*some/directory* and *some/other/directory*.
+```
+	extents-list /mnt/data -path /mnt/data/some/directory -prune -o -path /mnt/data/some/other/directory -prune -o | extents-size
+```
+
+* To create an extent list referring to the extents which would be removed in the example above
+requires generating the extent list for the directories and subtracting the extents generated above from it:
+```
+	extents-list /mnt/data/some/directory /mnt/data/some/other/directory >/tmp/directory.extents
+	extents-list /mnt/data -path /mnt/data/some/directory -prune -o -path /mnt/data/some/other/directory -prune -o >/tmp/remaining.extents
+	extents-difference /tmp/directory.extents /tmp/remaining.extents >/tmp/to-be-removed.extents
+```
 
 ## Notices
 Copyright (c) 2016 Graham R. Cobb.
