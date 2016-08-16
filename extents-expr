@@ -47,7 +47,7 @@ if [ "$1" = "-s" ]
 then
     shift
     $0 "$@" | extents-size
-    exit
+    exit $?
 fi
 
 outfile=""
@@ -109,5 +109,9 @@ do
     
     shift
 done
-cat $outfile
-rm $outfile
+if [ -n "$outfile" ]
+then
+    cat $outfile
+    rm $outfile
+fi
+

@@ -3,7 +3,7 @@
 # Copyright (C) 2016 Graham R. Cobb
 # Released under GPL V2 -- see LICENSE
 #
-# extents-difference <filename>...
+# extents-difference [-s] <filename>...
 #
 #
 # Output the extents contained in the first named file, with the extents from the other files removed
@@ -12,9 +12,16 @@
 # Note: uses file descriptors 7 and 8
 #
 
+if [ "$1" = "-s" ]
+then
+    shift
+    $0 "$@" | extents-size
+    exit $?
+fi
+
 if [ $# -lt 2 ]
 then
-    echo "Usage: $0 <filename> <filename>..."
+    echo "Usage: $0 <filename> <filename>..." >&2
     exit 1
 fi
 

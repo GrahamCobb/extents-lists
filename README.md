@@ -19,17 +19,17 @@ snapshots".
 The following commands are available:
 
 ```
-extents-list <find-options> >output-list
+extents-list [-s] <find-options> >output-list
 
-extents-merge <input-list >output-list
+extents-merge [-s] <input-list >output-list
 
 extents-size [<blocksize>] <input-list
 
-extents-union <filename>... >output-list
+extents-union [-s] <filename>... >output-list
 
-extents-intersection <filename>... >output-list
+extents-intersection [-s] <filename>... >output-list
 
-extents-difference <filename>... >output-list
+extents-difference [-s] <filename>... >output-list
 
 extents-expr [-s] <directory>... [<operator> <directory>...]... >output-list
 ```
@@ -47,11 +47,14 @@ do not follow those rules.
 ##extents-list
 
 ```
-extents-list <find-options>...
+extents-list [-s] <find-options>...
 ```
 
 *find-options* are options which will be passed to the `find`
 command to generate a list of files.
+
+If the -s option is specified then the resulting list is automatically sent to `extents-size`
+instead of being sent to *stdout*.
 
 Examples:
 
@@ -63,6 +66,9 @@ Examples:
 
 List of extent start and finish pairs on stdin.
 Output list with overlapping and adjacent extents merged.
+
+If the -s option is specified then the resulting list is automatically sent to `extents-size`
+instead of being sent to *stdout*.
 
 ##extents-size
 
@@ -76,10 +82,13 @@ Blocksize defaults to 4096.
 ##extents-union
 
 ```
-extents-union <filename>...
+extents-union [-s] <filename>...
 ```
 
 Output the extents contained in **any** of the named extents lists.
+
+If the -s option is specified then the resulting list is automatically sent to `extents-size`
+instead of being sent to *stdout*.
 
 ##extents-intersection
 
@@ -92,10 +101,13 @@ Output the extents contained in **all** of the named extents lists.
 ##extents-difference
 
 ```
-extents-difference <filename>...
+extents-difference [-s] <filename>...
 ```
 
 Output the extents contained in the first named file which are **not** present in any of the other files.
+
+If the -s option is specified then the resulting list is automatically sent to `extents-size`
+instead of being sent to *stdout*.
 
 ##extents-expr
 ```
@@ -156,10 +168,10 @@ But this counts space which might be shared with other directories/subvolumes/sn
 
 * To actually find out how much space would be freed if particular directories/subvolumes/snapshots are removed
 requires measuring the space occupied by the files which would be **left**.
-The key is to work out the find options which return those files, remembering that extents-list always adds `-type f -print0`
+The key is to work out the `find` options which return those files, remembering that extents-list always adds `-type f -print0`
 to the end (which means that a `-o` may be needed at the end of the options).
 In the example below, the disk is mounted as */mnt/data* and the two directories to be removed are
-*some/directory* and *some/other/directory*.
+*some/directory* and *some/other/directory*:
 ```
 	extents-list /mnt/data -path /mnt/data/some/directory -prune -o -path /mnt/data/some/other/directory -prune -o | extents-size
 ```

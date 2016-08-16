@@ -3,7 +3,7 @@
 # Copyright (C) 2016 Graham R. Cobb
 # Released under GPL V2 -- see LICENSE
 #
-# extents-list <find-options>...
+# extents-list [-s] <find-options>...
 #
 # Where <find-options> are options which will be passed to the find
 # command to result in a list of files to be considered.
@@ -15,10 +15,17 @@
 # extents-list subvolume-directory -mount
 #
 
+if [ "$1" = "-s" ]
+then
+    shift
+    $0 "$@" | extents-size
+    exit $?
+fi
+
 if [ $# -eq 0 ]
 then
-    echo "$0: No file specified"
-    echo "Usage: $0 <find-options>..."
+    echo "$0: No file specified" >&2
+    echo "Usage: $0 <find-options>..." >&2
     exit 1
 fi
 

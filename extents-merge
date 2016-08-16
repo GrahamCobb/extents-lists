@@ -4,6 +4,14 @@
 # Released under GPL V2 -- see LICENSE
 # list of extent start and finish pairs on stdin
 # output list with overlapping and adjacent extents merged
+
+if [ "$1" = "-s" ]
+then
+    shift
+    $0 "$@" | extents-size
+    exit $?
+fi
+
 sort -n |
 # Merge adjacent or overlapping extents
 awk -e '
