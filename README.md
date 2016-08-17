@@ -12,7 +12,7 @@ The scripts do not track which files the extents relate to, just which extents a
 These scripts allow answering questions like "how much space am I wasting by keeping historical snapshots",
 "how much data is being shared between two subvolumes", "how much of the data in my latest snapshot is
 unique to that snapshot" and "how much data would I actually free up if I removed (just) these particular 
-snapshots".
+directories".
 
 ## Program summary
 
@@ -133,7 +133,7 @@ instead of being sent to *stdout*.
 
 ## Examples
 
-* To find out how much space is being wasted by keeping historical btrbk snapshots
+* To find out how much space is being wasted by keeping historical snapshots
 of a subvolume called 'cobb' you could use:
 ```
  	extents-expr -s cobb.* - cobb
@@ -162,7 +162,7 @@ For example:
 
 * To find out how much space particular directories/subvolumes/snapshots are occupying you could use:
 ```
-	extents-expr -s some/directory some/other/directory
+	extents-list -s some/directory some/other/directory
 ```
 But this counts space which might be shared with other directories/subvolumes/snapshots.
 
@@ -183,6 +183,10 @@ requires generating the extent list for the directories and subtracting the exte
 	extents-list /mnt/data -path /mnt/data/some/directory -prune -o -path /mnt/data/some/other/directory -prune -o >/tmp/remaining.extents
 	extents-difference /tmp/directory.extents /tmp/remaining.extents >/tmp/to-be-removed.extents
 ```
+
+Be warned: the last two examples take a very LONG TIME (and require a lot of space in $TMPDIR)
+as they effectively have to get the file extents for every file on the disk (and sort them multiple times).
+They take over 6 hours on my system!
 
 ## Notices
 Copyright (c) 2016 Graham R. Cobb.
