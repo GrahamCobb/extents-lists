@@ -2,9 +2,9 @@
 
 Programs to manipulate lists of file extents.
 
-The main motivation for these scripts is to understand more about the usage of shared extents
-on my btrfs systems.  However, they are technically valid on any filesystem which supports
-the FIEMAP ioctl.
+The main motivation for these scripts is to understand more about the usage of shared extents,
+and hence disk usage, on my btrfs disks.
+However, they are technically valid on any filesystem which supports the FIEMAP ioctl.
 
 The scripts manipulate lists of occupied filesystem extents, treated as just sets of blocks.
 The scripts do not track which files the extents relate to, just which extents are in use.
@@ -64,7 +64,7 @@ Examples:
 
 ##extents-merge
 
-List of extent start and finish pairs on stdin.
+Unsorted list of extent start and finish pairs on stdin.
 Output list with overlapping and adjacent extents merged.
 
 If the -s option is specified then the resulting list is automatically sent to `extents-size`
@@ -93,10 +93,13 @@ instead of being sent to *stdout*.
 ##extents-intersection
 
 ```
-extents-intersection <filename>...
+extents-intersection [-s] <filename>...
 ```
 
 Output the extents contained in **all** of the named extents lists.
+
+If the -s option is specified then the resulting list is automatically sent to `extents-size`
+instead of being sent to *stdout*.
 
 ##extents-difference
 
@@ -157,23 +160,24 @@ For example:
 ```
 	extents-list latest-snapshot >/tmp/latest-snapshot.extents
 	extents-list cobb.* >/tmp/cobb.extents
-	extents-difference /tmp/latest-snapshot.extents /tmp/cobb.extents | extents-size
+	extents-difference -s /tmp/latest-snapshot.extents /tmp/cobb.extents
 ```
 
 * To find out how much space particular directories/subvolumes/snapshots are occupying you could use:
 ```
 	extents-list -s some/directory some/other/directory
 ```
-But this counts space which might be shared with other directories/subvolumes/snapshots.
+But this counts space which might be shared with other directories/subvolumes/snapshots,
+so does not tell you how much space would be released if the directories were deleted.
 
 * To actually find out how much space would be freed if particular directories/subvolumes/snapshots are removed
-requires measuring the space occupied by the files which would be **left**.
+requires measuring the space occupied by the files which would **remain**.
 The key is to work out the `find` options which return those files, remembering that extents-list always adds `-type f -print0`
 to the end (which means that a `-o` may be needed at the end of the options).
 In the example below, the disk is mounted as */mnt/data* and the two directories to be removed are
 *some/directory* and *some/other/directory*:
 ```
-	extents-list /mnt/data -path /mnt/data/some/directory -prune -o -path /mnt/data/some/other/directory -prune -o | extents-size
+	extents-list -s /mnt/data -path /mnt/data/some/directory -prune -o -path /mnt/data/some/other/directory -prune -o
 ```
 
 * To create an extent list referring to the extents which would be removed in the example above
