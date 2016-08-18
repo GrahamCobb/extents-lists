@@ -32,6 +32,8 @@ extents-intersection [-s] <filename>... >output-list
 extents-difference [-s] <filename>... >output-list
 
 extents-expr [-s] <directory>... [<operator> <directory>...]... >output-list
+
+extents-to-remove [-s] <disk> <directory>... >output-list
 ```
 
 ## Extent lists
@@ -134,6 +136,20 @@ of an operator will almost certainly not achieve the desired effect (see example
 If the -s option is specified then the resulting list is automatically sent to `extents-size`
 instead of being sent to *stdout*.
 
+##extents-to-remove
+```
+extents-to-remove [-s] <disk> <directory>...
+```
+
+Generates the extent list of extents which will be removed from the disk if the named
+directories are removed.
+Directory names must be **relative** to the named disk.
+
+Note: this script may take a very long time as the extents list for the whole disk must be generated!
+
+If the -s option is specified then the resulting list is automatically sent to `extents-size`
+instead of being sent to *stdout*.
+
 ## Examples
 
 * To find out how much space is being wasted by keeping historical snapshots
@@ -170,7 +186,7 @@ For example:
 But this counts space which might be shared with other files,
 so does not tell you how much space would be released if the files were deleted.
 
-* To actually find out how much space would be freed if particular files/directories/subvolumes/snapshots are removed
+* To actually find out how much space would be still be used if particular files/directories/subvolumes/snapshots are removed
 requires measuring the space occupied by the files which would **remain**.
 The key is to work out the `find` options which return those remaining files,
 remembering that extents-list always adds `-type f -print0`
@@ -181,7 +197,7 @@ In the example below, the disk is mounted as */mnt/data* and the two directories
 	extents-list -s /mnt/data -path /mnt/data/some/directory -prune -o -path /mnt/data/some/other/directory -prune -o
 ```
 
-* To create an extent list referring to the extents which would be removed in the example above
+* To create an extent list referring to the extents which would actually be removed in the example above
 requires generating the extent list for the files/directories being removed and
 subtracting the extents for the remaining files (generated above) from it:
 ```
@@ -190,8 +206,15 @@ subtracting the extents for the remaining files (generated above) from it:
 	extents-difference /tmp/directory.extents /tmp/remaining.extents >/tmp/to-be-removed.extents
 ```
 
-Be warned: the last two examples take a very LONG TIME (and require a lot of space in $TMPDIR)
-as they effectively have to get the file extents for every file on the disk (and sort them multiple times).
+* The simple case of removing whole directory trees from the disk can be automated using `extents-to-remove`.
+This script requires that the files to be removed are directory trees (as in the two examples above), not a more complex
+set of files (such as date-based or filename-based).
+```
+	extents-to-remove -s /mnt/data some/directory some/other/directory
+```
+
+Be warned: the last three examples take a very LONG TIME (and require a lot of space in $TMPDIR)
+as they effectively have to get the file extents for almost every file on the disk (and sort them multiple times).
 They take over 12 hours on my system!
 
 ## Notices

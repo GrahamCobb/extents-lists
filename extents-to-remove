@@ -1,0 +1,69 @@
+#!/bin/bash
+
+# Copyright (C) 2016 Graham R. Cobb
+# Released under GPL V2 -- see LICENSE
+#
+# extents-to-remove [-s] <disk> <directory>...
+#
+# Generates the extent list of extents which will be removed from the disk if the named
+# directory/ies are removed.
+#
+# Directory names must be relative to the named disk.
+#
+# If the -s option is specified then the resulting list is automatically sent to extents-size.
+#
+# Note: this script may take a long time as the extents list for the whole disk must be generated!
+#
+# Example: to find out how much space would be recovered by removing two directories from a disk
+# you might use:
+#
+#	extents-to-remove -s /mnt/data some/directory some/other/directory
+#
+
+if [ "$1" = "-s" ]
+then
+    shift
+    $0 "$@" | extents-size
+    exit $?
+fi
+
+if [ $# -lt 1 ]
+then
+	echo "$0: Disk name is required" >&2
+	echo "Usage: $0 [-s] <disk> <directory>..." >&2
+	exit 1
+fi
+
+# Remove trailing slash
+disk=${1%/}
+shift
+
+declare -a dirs
+declare -a findargs
+
+while [ $# -gt 0 ]
+do
+    # Remove any trailing slash
+    dir="${1%/}"
+
+    dirs[${#dirs[*]}]="$disk/$dir"
+    
+    findargs[${#findargs[*]}]="-path"
+    findargs[${#findargs[*]}]="$disk/$dir"
+    findargs[${#findargs[*]}]="-prune"
+    findargs[${#findargs[*]}]="-o"
+
+    shift
+done
+
+dirextents=`mktemp`
+#echo extents-list "${dirs[@]}"
+extents-list "${dirs[@]}" >$dirextents
+
+remextents=`mktemp`
+#echo extents-list "$disk" "${findargs[@]}"
+extents-list "$disk" "${findargs[@]}" >$remextents
+
+extents-difference $dirextents $remextents
+
+rm $dirextents $remextents
