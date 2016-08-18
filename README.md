@@ -163,16 +163,17 @@ For example:
 	extents-difference -s /tmp/latest-snapshot.extents /tmp/cobb.extents
 ```
 
-* To find out how much space particular directories/subvolumes/snapshots are occupying you could use:
+* To find out how much space particular files/directories/subvolumes/snapshots are occupying you could use:
 ```
-	extents-list -s some/directory some/other/directory
+	extents-list -s some/file some/directory some/other/directory
 ```
-But this counts space which might be shared with other directories/subvolumes/snapshots,
-so does not tell you how much space would be released if the directories were deleted.
+But this counts space which might be shared with other files,
+so does not tell you how much space would be released if the files were deleted.
 
-* To actually find out how much space would be freed if particular directories/subvolumes/snapshots are removed
+* To actually find out how much space would be freed if particular files/directories/subvolumes/snapshots are removed
 requires measuring the space occupied by the files which would **remain**.
-The key is to work out the `find` options which return those files, remembering that extents-list always adds `-type f -print0`
+The key is to work out the `find` options which return those remaining files,
+remembering that extents-list always adds `-type f -print0`
 to the end (which means that a `-o` may be needed at the end of the options).
 In the example below, the disk is mounted as */mnt/data* and the two directories to be removed are
 *some/directory* and *some/other/directory*:
@@ -181,7 +182,8 @@ In the example below, the disk is mounted as */mnt/data* and the two directories
 ```
 
 * To create an extent list referring to the extents which would be removed in the example above
-requires generating the extent list for the directories and subtracting the extents generated above from it:
+requires generating the extent list for the files/directories being removed and
+subtracting the extents for the remaining files (generated above) from it:
 ```
 	extents-list /mnt/data/some/directory /mnt/data/some/other/directory >/tmp/directory.extents
 	extents-list /mnt/data -path /mnt/data/some/directory -prune -o -path /mnt/data/some/other/directory -prune -o >/tmp/remaining.extents
@@ -190,7 +192,7 @@ requires generating the extent list for the directories and subtracting the exte
 
 Be warned: the last two examples take a very LONG TIME (and require a lot of space in $TMPDIR)
 as they effectively have to get the file extents for every file on the disk (and sort them multiple times).
-They take over 6 hours on my system!
+They take over 12 hours on my system!
 
 ## Notices
 Copyright (c) 2016 Graham R. Cobb.
