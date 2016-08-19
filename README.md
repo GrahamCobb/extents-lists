@@ -11,7 +11,7 @@ The scripts do not track which files the extents relate to, just which extents a
 
 These scripts allow answering questions like "how much space am I wasting by keeping historical snapshots",
 "how much data is being shared between two subvolumes", "how much of the data in my latest snapshot is
-unique to that snapshot" and "how much data would I actually free up if I removed (just) these particular 
+unique to that snapshot" and "how much space would I actually free up if I removed (just) these particular 
 directories".
 
 ## Program summary
@@ -31,7 +31,7 @@ extents-intersection [-s] <filename>... >output-list
 
 extents-difference [-s] <filename>... >output-list
 
-extents-expr [-s] <directory>... [<operator> <directory>...]... >output-list
+extents-expr [-s] <directory>|@<file>... [<operator> <directory>|@<file>...]... >output-list
 
 extents-to-remove [-s] <disk> <directory>... >output-list
 ```
@@ -116,12 +116,13 @@ instead of being sent to *stdout*.
 
 ##extents-expr
 ```
-extents-expr [-s] <directory>... [<operator> <directory>...]...
+extents-expr [-s] <directory>|@<file>... [<operator> <directory>|@<file>...]...
 ```
 
 Very simple expression evaluator for extents.
-Extents lists are generated from each *directory* and the operators are applied.
-The default operator used between adjacent directories is "union".
+Extents lists are read from each existing *file* (if the @<file> form is used)
+or generated automatically from each *directory* and the operators are applied.
+The default operator used between adjacent terms is "union".
 
 Operators are:
 *   + union
@@ -153,30 +154,29 @@ instead of being sent to *stdout*.
 ## Examples
 
 * To find out how much space is being wasted by keeping historical snapshots
-of a subvolume called 'cobb' you could use:
+of a subvolume called *cobb* you could use:
 ```
- 	extents-expr -s cobb.* - cobb
+ 	extents-expr -s cobb.snapshot.* - cobb
 ```
 
 * To find out how much data is shared between two specific snapshots use:
 ```
-	extents-expr -s Media.20160801T030601+0100 ^ Media.20160815T000602+0100
+	extents-expr -s Media.snapshot.20160801T030601+0100 ^ Media.snapshot.20160815T000602+0100
 ```
 
-* To determine how much of the data in the latest snapshot is
-unique to that snapshot is harder and and cannot be done using `extents-expr`.
+* To determine how much of the data is not in any of the existing snapshots
+is harder and and cannot be done in a single `extents-expr` command.
 ```
-	extents-expr -s latest-snapshot - cobb.*
+	extents-expr -s cobb - cobb.snapshot.*
 ```
 does **not** give the desired result because of the strict left-to-right evaluation of the expression.
-The actual effect is to subtract the first of the cobb.* directories and then add in all the rest.
+The actual effect is to subtract the first of the cobb.snapshot.* directories and then add in all the rest.
 
-The way to do this is to use the lower level commands and temporary files.
+The way to do this is to use a temporary file.
 For example:
 ```
-	extents-list latest-snapshot >/tmp/latest-snapshot.extents
-	extents-list cobb.* >/tmp/cobb.extents
-	extents-difference -s /tmp/latest-snapshot.extents /tmp/cobb.extents
+	extents-list cobb.snapshot.* >/tmp/cobb.snapshots.extents
+	extents-expr -s cobb - @/tmp/cobb.snapshots.extents
 ```
 
 * To find out how much space particular files/directories/subvolumes/snapshots are occupying you could use:
@@ -201,9 +201,10 @@ In the example below, the disk is mounted as */mnt/data* and the two directories
 requires generating the extent list for the files/directories being removed and
 subtracting the extents for the remaining files (generated above) from it:
 ```
-	extents-list /mnt/data/some/directory /mnt/data/some/other/directory >/tmp/directory.extents
+	# Generate list of extents which would remain
 	extents-list /mnt/data -path /mnt/data/some/directory -prune -o -path /mnt/data/some/other/directory -prune -o >/tmp/remaining.extents
-	extents-difference /tmp/directory.extents /tmp/remaining.extents >/tmp/to-be-removed.extents
+	# Calculate extents to actually be removed
+	extents-expr /mnt/data/some/directory /mnt/data/some/other/directory - @/tmp/remaining.extents
 ```
 
 * The simple case of removing whole directory trees from the disk can be automated using `extents-to-remove`.

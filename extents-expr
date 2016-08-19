@@ -3,10 +3,11 @@
 # Copyright (C) 2016 Graham R. Cobb
 # Released under GPL V2 -- see LICENSE
 #
-# extents-expr [-s] <directory>... [<operator> <directory>...]... 
+# extents-expr [-s] <directory>|@<file>... [<operator> <directory>|@<file>...]...
 #
 # Extents lists are generated from each <directory> and the operators are applied.  The default
-# operator used between adjacent directories is "union".
+# operator used between adjacent directories is "union".  Specifying @ causes the extents to be
+# read from an existing file.
 #
 # Operators are:
 #   + union
@@ -50,6 +51,17 @@ then
     exit $?
 fi
 
+function extents-file-or-list {
+    # Either generate an extent list or use an existing file
+    if [ -z "${1##@*}" ]
+    then
+	# @file
+	cat "${1#@}"
+    else
+	extents-list "$1"
+    fi
+}
+
 outfile=""
 while [ $# -gt 0 ]
 do
@@ -65,7 +77,7 @@ do
 	if [ -n "$outfile" ]
 	then
 	    tmpfile=`mktemp`
-	    extents-list "$1" >$tmpfile
+	    extents-file-or-list "$1" >$tmpfile
 
 	    newoutfile=`mktemp`
 	    extents-intersection $outfile $tmpfile >$newoutfile
@@ -82,7 +94,7 @@ do
 	if [ -n "$outfile" ]
 	then
 	    tmpfile=`mktemp`
-	    extents-list "$1" >$tmpfile
+	    extents-file-or-list "$1" >$tmpfile
 
 	    newoutfile=`mktemp`
 	    extents-difference $outfile $tmpfile >$newoutfile
@@ -93,7 +105,7 @@ do
     else
 	# Default operation (union)
 	tmpfile=`mktemp`
-	extents-list "$1" >$tmpfile
+	extents-file-or-list "$1" >$tmpfile
 
 	if [ -n "$outfile" ]
 	then
