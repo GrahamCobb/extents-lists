@@ -25,11 +25,11 @@ then
     exit 1
 fi
 
-function copy_remainder {
+copy_remainder() {
     cat <&${IN1}-
 }
 
-function diff2 {
+diff2() {
     # File descriptors
     IN1=7
     IN2=8

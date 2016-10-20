@@ -51,7 +51,7 @@ then
     exit $?
 fi
 
-function extents-file-or-list {
+extents-file-or-list() {
     # Either generate an extent list or use an existing file
     if [ -z "${1##@*}" ]
     then
