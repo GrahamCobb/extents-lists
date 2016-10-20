@@ -78,7 +78,7 @@ else
     file1=$1
     file2=$2
     shift 2
-    outfile=`mktemp`
+    outfile="$(mktemp)"
     diff2 $file1 $file2 >$outfile
     $0 $outfile "$@"
     rm $outfile

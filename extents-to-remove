@@ -56,11 +56,11 @@ do
     shift
 done
 
-dirextents=`mktemp`
+dirextents="$(mktemp)"
 #echo extents-list "${dirs[@]}"
 extents-list "${dirs[@]}" >$dirextents
 
-remextents=`mktemp`
+remextents="$(mktemp)"
 #echo extents-list "$disk" "${findargs[@]}"
 extents-list "$disk" "${findargs[@]}" >$remextents
 

@@ -76,10 +76,10 @@ do
 	# If existing outfile is null then we do nothing as intersection with null is still null
 	if [ -n "$outfile" ]
 	then
-	    tmpfile=`mktemp`
+	    tmpfile="$(mktemp)"
 	    extents-file-or-list "$1" >$tmpfile
 
-	    newoutfile=`mktemp`
+	    newoutfile="$(mktemp)"
 	    extents-intersection $outfile $tmpfile >$newoutfile
 	    rm $outfile
 	    rm $tmpfile
@@ -93,10 +93,10 @@ do
 	# If existing outfile is null then we do nothing as difference from null is still null
 	if [ -n "$outfile" ]
 	then
-	    tmpfile=`mktemp`
+	    tmpfile="$(mktemp)"
 	    extents-file-or-list "$1" >$tmpfile
 
-	    newoutfile=`mktemp`
+	    newoutfile="$(mktemp)"
 	    extents-difference $outfile $tmpfile >$newoutfile
 	    rm $outfile
 	    rm $tmpfile
@@ -104,12 +104,12 @@ do
 	fi
     else
 	# Default operation (union)
-	tmpfile=`mktemp`
+	tmpfile="$(mktemp)"
 	extents-file-or-list "$1" >$tmpfile
 
 	if [ -n "$outfile" ]
 	then
-	    newoutfile=`mktemp`
+	    newoutfile="$(mktemp)"
 	    extents-union $outfile $tmpfile >$newoutfile
 	    rm $outfile
 	    rm $tmpfile
