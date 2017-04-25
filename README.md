@@ -1,4 +1,4 @@
-#extents-lists
+# extents-lists
 
 Programs to manipulate lists of file extents.
 
@@ -46,7 +46,7 @@ reading the files. The file **MUST** be in numerical order by starting offset an
 NOT** overlap.  Adjacent extents **SHOULD** be combined. Note that `extents-merge` will fix files that
 do not follow those rules.
 
-##extents-list
+## extents-list
 
 ```
 extents-list [-s] <find-options>...
@@ -64,7 +64,7 @@ Examples:
 * extents-list some-directory
 * extents-list subvolume-directory -mount
 
-##extents-merge
+## extents-merge
 
 Unsorted list of extent start and finish pairs on stdin.
 Output list with overlapping and adjacent extents merged.
@@ -72,7 +72,7 @@ Output list with overlapping and adjacent extents merged.
 If the -s option is specified then the resulting list is automatically sent to `extents-size`
 instead of being sent to *stdout*.
 
-##extents-size
+## extents-size
 
 ```
 extents-size [<blocksize>]
@@ -81,7 +81,7 @@ extents-size [<blocksize>]
 Calculate space occupied by the extent list provided on stdin.
 Blocksize defaults to 4096.
 
-##extents-union
+## extents-union
 
 ```
 extents-union [-s] <filename>...
@@ -92,7 +92,7 @@ Output the extents contained in **any** of the named extents lists.
 If the -s option is specified then the resulting list is automatically sent to `extents-size`
 instead of being sent to *stdout*.
 
-##extents-intersection
+## extents-intersection
 
 ```
 extents-intersection [-s] <filename>...
@@ -103,7 +103,7 @@ Output the extents contained in **all** of the named extents lists.
 If the -s option is specified then the resulting list is automatically sent to `extents-size`
 instead of being sent to *stdout*.
 
-##extents-difference
+## extents-difference
 
 ```
 extents-difference [-s] <filename>...
@@ -114,7 +114,7 @@ Output the extents contained in the first named file which are **not** present i
 If the -s option is specified then the resulting list is automatically sent to `extents-size`
 instead of being sent to *stdout*.
 
-##extents-expr
+## extents-expr
 ```
 extents-expr [-s] <directory>|@<file>... [<operator> <directory>|@<file>...]...
 ```
@@ -125,9 +125,9 @@ or generated automatically from each *directory* and the operators are applied.
 The default operator used between adjacent terms is "union".
 
 Operators are:
-*   + union
-*   ^ intersection
-*   - difference
+* (plus sign) + union
+* (caret) ^ intersection
+* (minus sign) - difference
 
 There is no operator precedence, no parentheses and all evaluation is strictly left-to-right.
 Note: **THIS MIGHT CHANGE** at some time in the future.
@@ -137,7 +137,7 @@ of an operator will almost certainly not achieve the desired effect (see example
 If the -s option is specified then the resulting list is automatically sent to `extents-size`
 instead of being sent to *stdout*.
 
-##extents-to-remove
+## extents-to-remove
 ```
 extents-to-remove [-s] <disk> <directory>...
 ```
