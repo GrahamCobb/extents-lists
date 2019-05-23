@@ -36,7 +36,8 @@ find "$@" -type f -print0 |
     # Get just the extent starts and ends
     awk -e '
 	/^[[:space:]]*[[:digit:]]+:[[:space:]]*[[:digit:]]+..[[:space:]]*[[:digit:]]+:[[:space:]]*([[:digit:]]+)..[[:space:]]*([[:digit:]]+):/ {
-		if (match($0, /^[[:space:]]*[[:digit:]]+:[[:space:]]*[[:digit:]]+..[[:space:]]*[[:digit:]]+:[[:space:]]*([[:digit:]]+)..[[:space:]]*([[:digit:]]+):/, a) > 0)
+		if ( (! match($0,/inline/)) &&
+                     match($0, /^[[:space:]]*[[:digit:]]+:[[:space:]]*[[:digit:]]+..[[:space:]]*[[:digit:]]+:[[:space:]]*([[:digit:]]+)..[[:space:]]*([[:digit:]]+):/, a) > 0)
 			print a[1], a[2]
 		}
 	' |
