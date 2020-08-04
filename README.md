@@ -1,3 +1,6 @@
+SPDX-FileCopyrightText: 2016-2020 Graham R. Cobb
+SPDX-License-Identifier: GPL-3.0-or-later
+
 # extents-lists
 
 Programs to manipulate lists of file extents.
@@ -219,12 +222,12 @@ as they effectively have to get the file extents for almost every file on the di
 They take over 12 hours on my system!
 
 ## Notices
-Copyright (c) 2016 Graham R. Cobb.
-This software is distributed under the GPL (see the copyright notices and the LICENSE file).
+Copyright (c) 2016-2020 Graham R. Cobb.
+This software is distributed under the GPL 3.0 (see the copyright notices and the LICENSE file).
 
 `extents-lists` is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
+the Free Software Foundation; either version 3.0 of the License, or
 (at your option) any later version.
 
 `extents-list` is distributed in the hope that it will be useful,

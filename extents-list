@@ -1,7 +1,10 @@
 #!/bin/bash
 
+# SPDX-FileCopyrightText: 2016-2020 Graham R. Cobb
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 # Copyright (C) 2016 Graham R. Cobb
-# Released under GPL V2 -- see LICENSE
+# Released under GPL V3.0 -- see LICENSE
 #
 # extents-list [-s] <find-options>...
 #
