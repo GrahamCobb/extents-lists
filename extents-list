@@ -18,6 +18,9 @@
 # extents-list subvolume-directory -mount
 #
 
+# Make sure errors are passed back
+set -o pipefail
+
 if [ "$1" = "-s" ]
 then
     shift

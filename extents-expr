@@ -47,6 +47,9 @@
 # THIS MIGHT CHANGE at some time in the future.
 #
 
+# Make sure errors are passed back
+set -o pipefail
+
 if [ "$1" = "-s" ]
 then
     shift
@@ -80,12 +83,19 @@ do
 	if [ -n "$outfile" ]
 	then
 	    tmpfile="$(mktemp)"
+	    status=$?
+	    if [ $status != 0 ] ; then rm $outfile ; exit $status ; fi
+
 	    extents-file-or-list "$1" >$tmpfile
+	    status=$?
+	    if [ $status != 0 ] ; then rm $tmpfile ; rm $outfile ; exit $status ; fi
 
 	    newoutfile="$(mktemp)"
 	    extents-intersection $outfile $tmpfile >$newoutfile
+	    status=$?
 	    rm $outfile
 	    rm $tmpfile
+	    if [ $status != 0 ] ; then rm $newoutfile ; exit $status ; fi
 	    outfile=$newoutfile
 	fi
     elif [ "$1" = "-" ]
@@ -97,25 +107,45 @@ do
 	if [ -n "$outfile" ]
 	then
 	    tmpfile="$(mktemp)"
+	    status=$?
+	    if [ $status != 0 ] ; then rm $outfile ; exit $status ; fi
+
 	    extents-file-or-list "$1" >$tmpfile
+	    status=$?
+	    if [ $status != 0 ] ; then rm $tmpfile ; rm $outfile ; exit $status ; fi
 
 	    newoutfile="$(mktemp)"
+	    status=$?
+	    if [ $status != 0 ] ; then rm $tmpfile ; rm $outfile ; exit $status ; fi
+
 	    extents-difference $outfile $tmpfile >$newoutfile
+	    status=$?
 	    rm $outfile
 	    rm $tmpfile
+	    if [ $status != 0 ] ; then rm $newoutfile ; exit $status ; fi
 	    outfile=$newoutfile
 	fi
     else
 	# Default operation (union)
 	tmpfile="$(mktemp)"
+	status=$?
+	if [ $status != 0 ] ; then [ $outfile ] && rm $outfile ; exit $status ; fi
+
 	extents-file-or-list "$1" >$tmpfile
+	status=$?
+	if [ $status != 0 ] ; then rm $tmpfile ; [ $outfile ] && rm $outfile ; exit $status ; fi
 
 	if [ -n "$outfile" ]
 	then
 	    newoutfile="$(mktemp)"
+	    status=$?
+	    if [ $status != 0 ] ; then rm $tmpfile ; rm $outfile ; exit $status ; fi
+
 	    extents-union $outfile $tmpfile >$newoutfile
+	    status=$?
 	    rm $outfile
 	    rm $tmpfile
+	    if [ $status != 0 ] ; then rm $newoutfile ; exit $status ; fi
 	    outfile=$newoutfile
 	else
 	    outfile=$tmpfile

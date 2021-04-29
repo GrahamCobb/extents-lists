@@ -12,6 +12,9 @@
 # Output the extents contained in any of the named extents lists
 #
 
+# Make sure errors are passed back
+set -o pipefail
+
 if [ "$1" = "-s" ]
 then
     shift

@@ -15,6 +15,9 @@
 # Note: uses file descriptors 7 and 8
 #
 
+# Make sure errors are passed back
+set -o pipefail
+
 if [ "$1" = "-s" ]
 then
     shift
@@ -38,11 +41,11 @@ diff2() {
     IN2=8
     exec 7<$1 8<$2
 
-    read -u $IN1 start1 end1 restofline || return
-    if [ -z "$start1" -o -z "$end1" ] ; then return ; fi
+    read -u $IN1 start1 end1 restofline || return 0
+    if [ -z "$start1" -o -z "$end1" ] ; then return 0 ; fi
     
-    if ! read -u $IN2 start2 end2 restofline ; then copy_remainder ; return ; fi
-    if [ -z "$start2" -o -z "$end2" ] ; then copy_remainder ; return ; fi
+    if ! read -u $IN2 start2 end2 restofline ; then copy_remainder ; return $? ; fi
+    if [ -z "$start2" -o -z "$end2" ] ; then copy_remainder ; return $? ; fi
 
     while true
     do
@@ -50,8 +53,8 @@ diff2() {
 	
 	while [ $start1 -gt $end2 ]
 	do
-	    if ! read -u $IN2 start2 end2 restofline ; then copy_remainder ; return ; fi
-	    if [ -z "$start2" -o -z "$end2" ] ; then copy_remainder ; return ; fi
+	    if ! read -u $IN2 start2 end2 restofline ; then copy_remainder ; return $?; fi
+	    if [ -z "$start2" -o -z "$end2" ] ; then copy_remainder ; return $? ; fi
 	done
 
 	# Output any extents before extent2
@@ -60,7 +63,7 @@ diff2() {
 	then
 	    if [ $end1 -lt $start2 ] ; then let end=end1 ; else let end=start2-1 ; fi
 	    let length=end-start1+1
-	    echo $start1 $end $length
+	    echo $start1 $end $length || return $?
 	fi
 
 	# Skip extents contained in extent2
@@ -69,8 +72,8 @@ diff2() {
 	if [ $start1 -gt $end1 ]
 	then
 #	    echo "Before read1: S1=$start1 E1=$end1 S2=$start2 E2=$end2"
-	    read -u $IN1 start1 end1 restofline || return
-	    if [ -z "$start1" -o -z "$end1" ] ; then return ; fi
+	    read -u $IN1 start1 end1 restofline || return 0
+	    if [ -z "$start1" -o -z "$end1" ] ; then return 0 ; fi
 	fi
     done
 }
@@ -81,8 +84,14 @@ else
     file1=$1
     file2=$2
     shift 2
-    outfile="$(mktemp)"
+    outfile="$(mktemp)" || exit $?
+
     diff2 $file1 $file2 >$outfile
+    status=$?
+    if [ $status != 0 ] ; then rm $outfile ; exit $status ; fi
+
     $0 $outfile "$@"
+    status=$?
     rm $outfile
+    exit $status
 fi

@@ -8,6 +8,9 @@
 # list of extent start and finish pairs on stdin
 # output list with overlapping and adjacent extents merged
 
+# Make sure errors are passed back
+set -o pipefail
+
 if [ "$1" = "-s" ]
 then
     shift

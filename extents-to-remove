@@ -23,6 +23,9 @@
 #	extents-to-remove -s /mnt/data some/directory some/other/directory
 #
 
+# Make sure errors are passed back
+set -o pipefail
+
 if [ "$1" = "-s" ]
 then
     shift
@@ -59,14 +62,23 @@ do
     shift
 done
 
-dirextents="$(mktemp)"
+dirextents="$(mktemp)" || exit $?
+
 #echo extents-list "${dirs[@]}"
 extents-list "${dirs[@]}" >$dirextents
+status=$?
+if [ $status != 0 ] ; then rm $dirextents ; exit $status ; fi
 
 remextents="$(mktemp)"
+status=$?
+if [ $status != 0 ] ; then rm $dirextents ; exit $status ; fi
+
 #echo extents-list "$disk" "${findargs[@]}"
 extents-list "$disk" "${findargs[@]}" >$remextents
+status=$?
+if [ $status != 0 ] ; then rm $dirextents ; rm $remextents ; exit $status ; fi
 
 extents-difference $dirextents $remextents
-
+status=$?
 rm $dirextents $remextents
+exit $status
